@@ -1,65 +1,95 @@
 #include <iostream>
+#include <vector>
 #include <algorithm>
 #include <cstring>
-void DisplayArray(std::string, int*, int);
-void Search(std::string str1, std::string str2, int* p);
-void Array(std::string, int*, int);
+
+void DisplaySymbols(std::string, int*, int);
+std::vector<int> Search(std::string str, std::string subStr, int* ArrayOfSymbols);
+void DoArray(std::string, int*, int);
 const int N = 256;
+
 int main(void)
 {
-    std::string str1;
-    std::string str2;
+
+    std::string str;
+    std::string subStr;
     std::cout << "First string: " << std::endl;
-    getline(std::cin, str1);
-    std::cout << "Find search: " << std::endl;
-    getline(std::cin, str2);
-    int len = str2.length();
-    int p[N];
-    std::fill_n(p,N,len);
-    Array(str2, p, len);
-    DisplayArray(str2,p,len);
-    Search(str1,str2,p);
+    getline(std::cin, str);
+    std::cout << "Finding string: " << std::endl;
+    getline(std::cin, subStr);
+
+    int len = subStr.length();
+    int ArrayOfSymbols[N];
+
+    std::fill_n(ArrayOfSymbols, N, len);
+
+    DoArray(subStr, ArrayOfSymbols, len);
+    DisplaySymbols(subStr, ArrayOfSymbols, len);
+
+    std::vector<int> indexes = Search(str,subStr,ArrayOfSymbols);
+    
+    if (indexes.empty())
+        std::cout << "Nothing was found!" << std::endl;
+    else
+    {
+       for (int i  = 0; i < indexes.size(); ++i)
+            std::cout << indexes[i] << " ";         
+        std::cout << std::endl;
+    }
+
+    
     return 0;
 }
-void DisplayArray(std::string str2, int* p, int len)
+
+void DisplaySymbols(std::string subStr, int* ArrayOfSymbols, int len)
 {
     for (int i = 0; i < len; ++i)
     {
-       std::cout << str2[i] << " = "
-        <<  p[str2[i]]  << std::endl;
+       std::cout << subStr[i] << " = "
+        <<  ArrayOfSymbols[subStr[i]]  << std::endl;
     }
 }
-void Search(std::string str1, std::string str2, int* p)
+
+void DoArray(std::string subStr, int* ArrayOfSymbols, int len)
 {
-    int n = str1.length();
-    int m = str2.length();
-    int i,j,k;
-    bool b = true;
-    for (i = m - 1; i < n; i += p[str1[i]])
+    bool a;
+
+    for (int i = 0; i < len - 1; ++i)
     {
-        for (k = i, j = m - 1; j>=0 && str1[k] == str2[j] ; j--, k--)
+        if (subStr[i] == subStr[len])
         {
+            ArrayOfSymbols[subStr[len]] = len - 1 - i;
+            a = false;
+        }
+        ArrayOfSymbols[subStr[i]] = len - 1 - i;
+    }
+
+    if (a)
+        ArrayOfSymbols[subStr[len]] = len;
+
+}
+
+std::vector<int> Search(std::string str, std::string subStr, int* ArrayOfSymbols)
+{
+
+    int n = str.length();
+    int m = subStr.length();
+    
+    int i, j, k;
+
+    std::vector<int> indexes;
+    
+    for (i = m - 1; i < n; i += ArrayOfSymbols[str[i]])
+    {
+        for (k = i, j = m - 1; j >= 0 && str[k] == subStr[j] ; j--, k--)
+        {
+
             if (j == 0) {
-                b = false;
-                std::cout << "Index is "  << i+1-m << std::endl;
+               
+                indexes.push_back(i+1-m);
             }
         }
     }
-    if (b)
-        std::cout << "Not found\n";
+    return indexes;
 }
-void Array(std::string str2, int* p, int len)
-{
-    bool a;
-    for (int i = 0; i < len - 1; ++i)
-    {
-        if (str2[i] == str2[len])
-        {
-            p[str2[len]] = len - 1 - i;
-            a = false;
-        }
-        p[str2[i]] = len - 1 - i;
-    }
-    if (a)
-        p[str2[len]] = len;
-}
+    
