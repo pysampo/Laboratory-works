@@ -26,9 +26,6 @@ int main(void)
     {
         std::cout << "Enter your range: ";
         std::cin >> Range;
-        //int sz[10];
-        //int kz[14];
-        //insertionsort(sz,kz);
         int* array = new int[Range];
         int* array1= new int[Range];
         int* array2= new int[Range];
