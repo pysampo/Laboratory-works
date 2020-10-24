@@ -67,16 +67,6 @@ bVector:: bVector(int nn, int mm)
     SetAll_0();
 }
 
-std::ostream & operator <<(std::ostream & out, bVector& tempV)
-{
-    for (int j = 0; j < tempV.charBytes; ++j){
-        for (int i = 0; i < 8; ++i) {
-         out << ((tempV.bv[j] & (1 << (7- i)) ? 1 : 0));
-        }
-    }
-    return out;
-}
-
 int bVector::operator[] (int index)
 {
     if(index < lenV && index >= 0)
@@ -289,6 +279,17 @@ bool  bVector::InverstionSet(int index)
     }
     return false;
 }
+
+std::ostream & operator <<(std::ostream & out, bVector& tempV)
+{
+    for (int j = 0; j < tempV.charBytes; ++j){
+        for (int i = 0; i < 8; ++i) {
+         out << ((tempV.bv[j] & (1 << (7- i)) ? 1 : 0));
+        }
+    }
+    return out;
+}
+
 
 bVector bVector::operator <<(int integer)
 {
