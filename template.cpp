@@ -52,7 +52,81 @@ public:
     friend std::istream & operator >> (std::istream & is, Array<U> & t);
 };
 
+template <class T>
+bool Array<T>::operator == (const Array<T> & tempArray) {
+    if (nElements != tempArray.nElements) {
+        return false;
+    }
+    for (int i = 0; i < nElements; ++i) {
+        if (array[i] != tempArray.array[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
+template <class T>
+bool Array<T>::DeleteIndex(const int position) {
+    if (position < 0 || position > nElements) {
+        std::cerr << "Error: index is not right! " <<
+            std::endl;
+        return false;
+    }
+    nElements = nElements - 1;
+    for (int i = position; i < nElements; ++i) {
+        array[i] = array[i + 1];
+    }
+    return true;
+}
+
+template <class T>
+T Array<T>::FindMin() {
+    T min = array[0];
+    for (int i = 0; i < nElements; ++i) {
+        if (array[i] < min) {
+            min = array[i];
+        }
+    }
+    return min;
+};
+
+template <class T>
+Array<T> Array<T>::operator + (const T temp) {
+
+    if(memory == nElements)
+    {
+        Array tempArray(memory+1, nElements + 1);
+        for (int i = 0; i < nElements; ++i)
+            tempArray.array[i] = array[i];
+        tempArray.array[tempArray.nElements-1] = temp;
+        return tempArray;
+    }
+    Array tempArray(memory, nElements + 1);
+    for (int i = 0; i < nElements; ++i)
+        tempArray.array[i] = array[i];
+    tempArray.array[tempArray.nElements - 1] = temp;
+    return tempArray;
+}
+
+template <class T> 
+Array<T> & Array<T>::operator += (const T temp) 
+{
+    if(memory == nElements)
+    {
+        Array tempArray(memory+1, nElements + 1);
+        for (int i = 0; i < nElements; ++i)
+            tempArray.array[i] = array[i];
+        tempArray.array[tempArray.nElements-1] = temp;
+        *this = tempArray;
+        return *this;
+    }
+    Array tempArray(memory, nElements + 1);
+    for (int i = 0; i < nElements; ++i)
+        tempArray.array[i] = array[i];
+    tempArray.array[tempArray.nElements - 1] = temp;
+    *this = tempArray;
+    return *this;
+}
 template <class T>
 bool Array<T>::operator != (const Array<T> & tempArray) {
     if (nElements != tempArray.nElements) {
@@ -66,16 +140,15 @@ bool Array<T>::operator != (const Array<T> & tempArray) {
     return false;
 }
 template <class T>
-bool Array<T>::operator == (const Array<T> & tempArray) {
-    if (nElements != tempArray.nElements) {
-        return false;
+T & Array<T>::operator[](const int position) {
+    if (position < 0 && (position + nElements >= 0)) {
+        return array[position + nElements];
     }
-    for (int i = 0; i < nElements; ++i) {
-        if (array[i] != tempArray.array[i]) {
-            return false;
-        }
+    if (position < nElements && position >= 0) {
+        return array[position];
     }
-    return true;
+    assert(false && "Error: index is not right.");
+    return array[0];
 }
 
 template <class T>
@@ -122,34 +195,14 @@ T Array<T>::FindMax() {
     return max;
 }
 
-template <class T>
-T Array<T>::FindMin() {
-    T min = std::numeric_limits<T>::max();
-    for (int i = 0; i < nElements; ++i) {
-        if (array[i] < min) {
-            min = array[i];
-        }
-    }
-    return min;
-}
 
-template <class T>
-T & Array<T>::operator[](const int position) {
-    if (position < 0 && (position + nElements >= 0)) {
-        return array[position + nElements];
-    }
-    if (position < nElements && position >= 0) {
-        return array[position];
-    }
-    assert(false && "Error: index is not right.");
-}
 
 template <class T>
 bool Array<T>::InsertIndex(const int position, const T key) {
     if (position < 0 || position > nElements) {
         std::cerr << "Error: index is not right! " <<
             std::endl;
-        return -1;
+        return false;
     }
     nElements = nElements + 1;
     if (nElements > memory) {
@@ -163,22 +216,10 @@ bool Array<T>::InsertIndex(const int position, const T key) {
     for (int i = nElements - 1; i > position; --i)
         array[i] = array[i - 1];
     array[position] = key;
-    return 1;
+    return true;
 }
 
-template <class T>
-bool Array<T>::DeleteIndex(const int position) {
-    if (position < 0 || position > nElements) {
-        std::cerr << "Error: index is not right! " <<
-            std::endl;
-        return -1;
-    }
-    nElements = nElements - 1;
-    for (int i = position; i < nElements; ++i) {
-        array[i] = array[i + 1];
-    }
-    return 1;
-}
+
 
 template <class T>
 Array<T> & Array<T>::operator -= (const int position) {
@@ -203,10 +244,9 @@ Array<T> & Array<T>::operator - (const T key) {
                 for (int j = i; j < nElements; ++j) {
                     array[j] = array[j + 1];
                 }
-                return 1;
+                return *this;
             }
             
-    
     }
     std::cerr << "Nothing was found!" << std::endl;
     return *this;
@@ -242,7 +282,7 @@ void Array<T>::SortArray() {
         }
     }
 }
-template <class T>
+template <class T>  
 bool Array<T>::DeleteElem(const T key) {
 
     for (int i = 0; i < nElements; ++i)
@@ -251,68 +291,13 @@ bool Array<T>::DeleteElem(const T key) {
             nElements = nElements - 1;
             for (int j = i; j < nElements; ++j)
                 array[j] = array[j+1];
-            return 1;
+            return true;
         }
 
-    return -1;
-}
-template <class T>
-Array<T> Array<T>::operator + (const T temp) {
-    Array tempArray;
-    delete [] tempArray.array;
-    if (memory == nElements) {
-        tempArray.memory = memory;
-        tempArray.nElements = nElements;
-        tempArray.array = new T [tempArray.memory];
-        for (int i = 0; i < nElements; ++i)
-            tempArray.array[i] = array[i];
-
-        delete[] array;
-        memory = nElements + 1;
-        array = new T[memory];
-        for (int i = 0; i < nElements; ++i)
-            array[i] = tempArray.array[i];
-        delete[] tempArray.array;
-    }
-    tempArray.memory = memory;
-    tempArray.array = new T[memory];
-    tempArray.nElements = nElements + 1;
-    for (int i = 0; i < nElements; ++i) {
-        tempArray.array[i] = array[i];
-    }
-    tempArray.array[tempArray.nElements - 1] = temp;
-    return tempArray;
+    return false;
 }
 
-template <class T> 
-Array<T> & Array<T>::operator += (const T temp) 
-{
-    Array tempArray;
-    delete [] tempArray.array;
-    if (memory == nElements) {
-        tempArray.memory = memory;
-        tempArray.nElements = nElements;
-        tempArray.array = new T [tempArray.memory];
-        for (int i = 0; i < nElements; ++i)
-            tempArray.array[i] = array[i];
 
-        delete[] array;
-        memory = nElements + 1;
-        array = new T[memory];
-        for (int i = 0; i < nElements; ++i)
-            array[i] = tempArray.array[i];
-        delete[] tempArray.array; //g
-    }
-    tempArray.memory = memory;
-    tempArray.array = new T[tempArray.memory];
-    tempArray.nElements = nElements + 1;
-    for (int i = 0; i < nElements; ++i) {
-        tempArray.array[i] = array[i];
-    }
-    tempArray.array[tempArray.nElements - 1] = temp;
-    *this = tempArray;
-    return *this;
-}
 template <class T>
 int Array<T>::FindElem(const T key) {
       for (int i = 0; i < nElements; ++i)
@@ -402,7 +387,5 @@ void Array<T>::FillArray()
 
 int main()
 {
-
-    
     return 0;
 }
