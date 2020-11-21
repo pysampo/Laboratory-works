@@ -37,7 +37,7 @@ class List {
     Node * head, * tail;
     int size;
     void helpAdd(Node * temp, int key);
-
+    Node * findNode(int index); ////////////////
 public:
 
     List();
@@ -46,7 +46,6 @@ public:
     List(const List & temp);
     List operator + (const List & temp);
     int & operator[](const int index);
-    Node * findNode(int index);
     void addToHead(int key);
     void addToTail(int key);
 
@@ -89,50 +88,10 @@ std::istream & operator >> (std::istream & in , List & temp) {
 std::ostream & operator << (std::ostream & os, List & temp) {
     Node * current = temp.getHead();
     while (current != nullptr) {
-
         os << current -> getValue() << " ";
         current = current -> getNext();
     }
-    os << std::endl;
     return os;
-}
-
-void List::supportDouble() {
-    Node * temp;
-    temp = tail = head;
-    while (tail -> getNext() != nullptr) {
-        tail = tail -> getNext();
-        tail -> getPrev() = temp;
-        temp = temp -> getNext();
-    }
-}
-
-void List::addToTail(int key) {
-    if (tail == nullptr && size != 0) {
-        supportDouble();
-        Node * newNode = new Node(key, nullptr, tail);
-        tail -> getNext() = newNode;
-        tail = newNode;
-
-    } else {
-        Node * temp = new Node(key, nullptr, tail);
-        if (size == 0) {
-            head = tail = temp;
-        } else {
-            tail -> getNext() = temp;
-            tail = temp;
-        }
-    }
-    ++size;
-}
-
-void List::addToHead(int key) {
-    Node * temp = new Node(key, head);
-    if (tail != nullptr) {
-        head -> getPrev() = temp;
-    }
-    head = temp;
-    ++size;
 }
 
 List & List::operator = (const List & temp) {
@@ -199,25 +158,7 @@ int & List::operator[](const int index) {
     return temp -> getValue();
 }
 
-void List::clearList() {
-    if (!isEmpty()) {
-        if (tail)
-            while (size) {
-                if (size == 1) {
-                    deleteHead();
-                    break;
-                }
-                deleteHead();
-                deleteTail();
-            }
-        else
-            while (size)
-                deleteHead();
-    }
-}
-
 bool List::delFromPosition(int index) {
-
     if (index < 0 || index >= size)
         return false;
     if (index == 0)
@@ -238,6 +179,23 @@ bool List::delFromPosition(int index) {
         --size;
     }
     return true;
+}
+
+Node * List::findNode(int index) {
+    Node * temp = nullptr;
+    int i;
+    if (index <= size / 2 || tail == nullptr) {
+        temp = head;
+        i = 0;
+        while (i++ != index - 1)
+            temp = temp -> getNext();
+    } else {
+        temp = tail;
+        i = size - index;
+        while (i--)
+            temp = temp -> getPrev();
+    }
+    return temp;
 }
 
 Node * List::findELem(int key) {
@@ -272,7 +230,7 @@ Node * List::findELem(int key) {
 
 void List::helpAdd(Node * temp, int key) {
 
-    if (tail == nullptr) {
+    if (tail != nullptr) {
         Node * newNode = new Node(key, temp -> getNext(), temp);
         temp -> getPrev() = newNode;
         temp = newNode -> getPrev();
@@ -309,27 +267,6 @@ bool List::addToPosition(int key, int index) {
         helpAdd(findNode(index), key);
     }
     return true;
-}
-
-List::~List() {
-    clearList();
-}
-
-void List::addtoEnd(int key) {
-    if (size == 0) {
-        addToHead(key);
-    } else if (tail) {
-        addToTail(key);
-    } else {
-        Node * temp = findNode(size);
-        Node * newNode = new Node(key);
-        temp -> getNext() = newNode;
-        ++size;
-    }
-}
-
-bool List::isEmpty() {
-    return (head == nullptr ? true : false);
 }
 
 int List::maxList() {
@@ -402,57 +339,120 @@ bool List::delWithKey(int key) {
     return false;
 }
 
-void List::delEnd() {
-    if (size == 0) {
-        deleteHead();
-    } else if (tail) {
-        deleteTail();
-    } else {
-        Node * temp = findNode(size - 1);
-        delete temp -> getNext();
-        temp -> getNext() = nullptr;
-        --size;
+void List::addToHead(int key) {
+    Node * temp = new Node(key, head);
+    if (tail != nullptr) {
+        head -> getPrev() = temp;
+    }
+    head = temp;
+    ++size;
+}
+
+List::~List() {
+    clearList();
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+void List::supportDouble() {
+   
+    if (!isEmpty()) { 
+        Node * temp;
+        temp = tail = head;
+        while (tail -> getNext() != nullptr) {
+            tail = tail -> getNext();
+            tail -> getPrev() = temp;
+            temp = temp -> getNext();
+        }
     }
 }
 
-void List::deleteTail() {
-    if (size == 1) {
-        delete head;
-    } else if (tail == nullptr) {
-        delEnd();
+void List::addToTail(int key) {
+    if (tail == nullptr && !isEmpty()) {
+        supportDouble();
+        Node * newNode = new Node(key, nullptr, tail);
+        tail -> getNext() = newNode;
+        tail = newNode;
     } else {
-        Node * temp = tail;
-        tail = tail -> getPrev();
-        tail -> getNext() = nullptr;
-        delete temp;
+        Node * temp = new Node(key, nullptr, tail);
+        if (isEmpty()) {
+            head = tail = temp;
+        } else {
+            tail -> getNext() = temp;
+            tail = temp;
+        }
     }
-    --size;
+    ++size;
+}
+
+bool List::isEmpty() {
+    return (head == nullptr ? true : false);
+}
+
+void List::clearList() {
+    while(!isEmpty()) {
+        deleteHead();
+    }
+}
+
+void List::addtoEnd(int key) {
+    if (isEmpty()) {
+        addToHead(key);
+    } else if (tail) {
+        addToTail(key);
+    } else {
+        Node * temp = findNode(size);
+        Node * newNode = new Node(key);
+        temp -> getNext() = newNode;
+        ++size;
+    }
+}
+
+void List::delEnd() {
+    if (!isEmpty()) { 
+        if (size == 1) { 
+            deleteHead();
+        } else if (tail) {
+            deleteTail();
+        } else {
+            Node * temp = findNode(size - 1);
+            delete temp -> getNext();
+            temp -> getNext() = nullptr;
+            --size;
+        }
+    }
+}
+
+void List::deleteTail() {    
+    if (!isEmpty()) { 
+        if (size == 1) {
+            deleteHead();
+        } else if (tail == nullptr) {
+                delEnd();
+        } else {
+            Node * temp = tail;
+            tail = tail -> getPrev();
+            tail -> getNext() = nullptr;
+            delete temp;
+            --size;
+        }
+    }
 }
 
 void List::deleteHead() {
-    Node * temp = head;
-    if (size != 1)
-        head = head -> getNext();
-    head -> getPrev() = nullptr;
-    delete temp;
-    --size;
-}
+    if (!isEmpty()) {     
+        Node * temp = head;
+        if (size != 1)
+            head = head -> getNext();
+        head -> getPrev() = nullptr;
+        delete temp;
+        --size;
 
-Node * List::findNode(int index) {
-    Node * temp = nullptr;
-    int i;
-    if (index <= size / 2 || tail == nullptr) {
-        temp = head;
-        i = 0;
-        while (i++ != index - 1)
-            temp = temp -> getNext();
-    } else {
-        temp = tail;
-        i = size - index;
-        while (i--)
-            temp = temp -> getPrev();
+        if (size == 0) {
+            head = tail = nullptr;
+        }
     }
-    return temp;
 }
 
 List::List() {
