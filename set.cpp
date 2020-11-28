@@ -480,7 +480,7 @@ bool Set:: operator == (Set& temp)
 bool Set::operator != (Set& temp)
 {
     Set ted = *this / temp;
-    if (power != temp.power || ted.power == 0)
+    if (power != temp.power || ted.power)
         return true;
     return false;
 }
