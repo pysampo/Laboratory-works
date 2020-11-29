@@ -1,22 +1,22 @@
+#include <iostream>
 #include <ostream>
 #include <cstring>
 #include <cmath>
 #include <vector>
+
 #define uc unsigned char
-#include <iostream>
 
 class bVector
 {
     int lenV, charBytes;
     unsigned char* bv;
-
     public:
+    enum { UCHAR_SIZE = 256, BITS = 8 };
     bVector(int nn = 0, int mm = 1);
-    bVector(const char *, int length = 0);
+    bVector(const char *, int length = 0, bool flag = false);
     ~bVector() { delete [] bv; }
     bool Set_1(int index);
     bVector(const bVector& tempVector);
-
     int CreateVector(const char* str, int cChar, int current_len, int current_i);
     bool Set_0(int index);
     bool InverstionSet(int index);
@@ -26,18 +26,15 @@ class bVector
     bool SetWithRange_1(int bits, int  index);
     bool SetWithRange_0(int bits, int  index);
     bool InverstionWithRange(int bits, int index);
-
     bVector & operator = (const bVector & tempV);
 
     bVector operator & (const bVector & tempV);
     bVector & operator &= (const bVector & tempV);
-
     bVector operator ^ (const bVector & tempV);
     bVector & operator ^= (const bVector & tempV);
-
     bVector operator |(const bVector & tempV);
     bVector & operator |= (const bVector & tempV);
-    void operator ~ ();
+    bVector operator ~ ();
     bVector operator >> (int integer);
     bVector operator << (int integer);
     bVector &operator <<= (int integer);
@@ -46,7 +43,6 @@ class bVector
     int operator[] (int index);
     friend std::ostream&operator <<(std::ostream & out, bVector& tempV);
     friend std::istream&operator <<(std::istream & in, bVector &tempV);
-
     long Result();
     bool operator == (int);
     bool operator != (int);
@@ -66,8 +62,8 @@ bVector:: bVector(int nn, int mm)
 {
     charBytes = (mm == 0 ? 1 : (mm < 0 ? -mm : mm));
     lenV = (nn < 0 ? 0 : nn);
-    if (nn > 8*mm) {
-        charBytes = (lenV + 7) / 8;
+    if (nn > BITS * mm) { 
+        charBytes = (lenV + 7) / BITS;
     }
     bv = new uc [charBytes];
     SetAll_0();
@@ -76,15 +72,13 @@ bVector:: bVector(int nn, int mm)
 std::ostream & operator <<(std::ostream & out, bVector& tempV)
 {
     for (int j = 0; j < tempV.charBytes; ++j){
-        for (int i = 0; i < 8; ++i) {
-         out << ((tempV.bv[j] & (1 << (7- i)) ? 1 : 0));
+        for (int i = 0; i < tempV.BITS; ++i) {
+         out << ((tempV.bv[j] & (1 << (tempV.BITS - 1 - i)) ? 1 : 0));
         }
     }
     return out;
 }
-
-int bVector::operator[] (int index)
-{
+int bVector::operator[] (int index) {
     if(index < lenV && index >= 0)
     {
         int cChar = charBytes - 1 - index / 8;
@@ -113,29 +107,47 @@ std::istream & operator>>(std::istream & in, bVector & tempV)
     in >> Range;
     char* str = new char[Range];
     in >> str;
-    bVector temp(str);
+
+    int i = 0;
+    bool flag = false;
+    while (str[i]) {
+        if (str[i] != '1' &&  str[i] != '0') {
+            flag = true;
+            break;
+        }    
+        ++i;
+    }
+    bVector temp(str, 0, flag);
     delete [] str;
     tempV = temp;
     return in;
 };
 
-bVector::bVector(const char* str, int length)
+bVector::bVector(const char* str, int length, bool flag)
 {
-    int lenStr = strlen(str);
-    lenV = (length == 0) ? lenStr : (length > lenStr ? lenStr : length);
-    charBytes = (lenV + 7) / 8;
-    bv = new uc[charBytes];
-    int cChar = 0;
-    int current_i = 0;
-    if (lenV % 8)
-    {
-        current_i = CreateVector(str, cChar, lenV % 8, current_i);
-        ++cChar;
-    }
-    while(current_i < lenV)
-    {
-        current_i = CreateVector(str, cChar, 8, current_i);
-        ++cChar;
+    if (flag) {
+       lenV = UCHAR_SIZE;
+       charBytes = (lenV+7) / BITS;
+       bv = new uc[charBytes];
+       for (int i = 0; str[i]; ++i)
+           Set_1(int(str[i]));
+    } else {
+        int lenStr = strlen(str);
+        lenV = (length == 0) ? lenStr : (length > lenStr ? lenStr : length);
+        charBytes = (lenV + 7) / BITS;
+        bv = new uc[charBytes];
+        int cChar = 0;
+        int current_i = 0;
+        if (lenV % BITS)
+        {
+            current_i = CreateVector(str, cChar, lenV % BITS, current_i);
+            ++cChar;
+        }
+        while(current_i < lenV)
+        {
+            current_i = CreateVector(str, cChar, BITS, current_i);
+            ++cChar;
+        }
     }
 }
 bVector::bVector(const bVector& tempVector)
@@ -291,30 +303,29 @@ void bVector::SetAll_1()
 }
 bool bVector::Set_0(int index)
 {
-    if (index < charBytes*8 && index >= 0)
+    if (index < charBytes*BITS && index >= 0)
     {
-        int cChar = charBytes - 1 - index / 8;
-        bv[cChar] &= ~(1 << index % 8);
+        int cChar = charBytes - 1 - index / BITS;
+        bv[cChar] &= ~(1 << index % BITS);
         return true;
     }
     return false;
 }
 bool bVector::Set_1(int index)
 {
-    if (index < charBytes*8 && index >= 0)
-    {
-        int cChar = charBytes - 1 - index / 8;
-        bv[cChar] |= (1 << index % 8);
+    if (index < charBytes*BITS && index >= 0) {
+        int cChar = charBytes - 1 - index / BITS;
+        bv[cChar] |= (1 << index % BITS );
         return true;
     }
     return false;
 }
 bool  bVector::InverstionSet(int index)
 {
-    if (index < charBytes*8 && index >= 0)
+    if (index < charBytes*BITS && index >= 0)
     {
-        int cChar = charBytes - 1 - index / 8;
-        bv[cChar] ^= (1 << index % 8);
+        int cChar = charBytes - 1 - index / BITS;
+        bv[cChar] ^= (1 << index % BITS);
         return true;
     }
     return false;
@@ -336,7 +347,7 @@ bVector bVector::operator>>(int integer)
 bVector & bVector::operator >>= (int integer)
 {
     for (int i = 0; i < integer; ++i) {
-        for (int j = 0; j < charBytes*8-1; ++j)
+        for (int j = 0; j < charBytes*BITS-1; ++j)
         {
             if (this->operator[](j+1))
                 Set_1(j);
@@ -351,7 +362,7 @@ bVector & bVector::operator >>= (int integer)
 bVector & bVector::operator <<= (int integer)
 {
     for (int i = 0; i < integer; ++i) {
-        for (int j = charBytes*8 -1; j >= 0; --j)
+        for (int j = charBytes*BITS -1; j >= 0; --j)
         {
             if (this->operator[](j-1))
                 Set_1(j);
@@ -367,7 +378,7 @@ long bVector::Result()
     long result = 0;
     int eq = 0;
     for (int j = charBytes-1; j >= 0; --j)
-        for (int i = 0; i < 8; ++i, ++eq)
+        for (int i = 0; i < BITS; ++i, ++eq)
         {
             if (bv[j] & (1 << i ))
                 result += (1 << eq);
@@ -375,10 +386,12 @@ long bVector::Result()
     return result;
 }
 
-void bVector::operator ~()
+bVector bVector::operator ~()
 {
+    bVector ted (lenV);
     for (int j = 0; j < charBytes; ++j)
-        bv[j] = ~bv[j];
+        ted.bv[j] = ~bv[j];
+    return ted;
 }
 
 bool bVector::operator <= (int key)
@@ -460,7 +473,7 @@ public:
     Set operator - (const char);
     Set& operator -= (const char);
 
-    Set& operator ~ ();
+    Set operator ~ ();
 
     int getPower() {
         return power;
@@ -468,8 +481,6 @@ public:
 
     friend std::ostream& operator << (std::ostream & os,  Set& temp);
     friend std::istream& operator >> (std::istream & is,  Set& temp);
-
-    enum { SIZE_SET = 256 };
 };
 
 bool Set:: operator == (Set& temp)
@@ -485,14 +496,37 @@ bool Set::operator != (Set& temp)
     return false;
 }
 
-Set& Set::operator ~ ()
+Set Set::operator ~ ()
 {
-    bVector::operator~();
-    power = WeightOfVector();
-    return *this;
+      Set ted;
+      ted.bVector::operator=(this->bVector::operator~());
+      ted.power = WeightOfVector();
+      return ted;
 }
 
+std::istream& operator >> (std::istream & is,  Set& temp)
+{
+    is >> static_cast<bVector&> (temp);
+    temp.power = temp.WeightOfVector();
+    return is;
+}
+std::ostream& operator << (std::ostream& os, Set& temp)
+{
+    //can output values
+   // os << static_cast<bVector&>(temp);
+   // return os; 
+   //
+   // but for  save immutability of bVector:
+   int i = 0;
+   while (i < temp.UCHAR_SIZE) {
+        if ((temp)[i]) {
+            os << char(i);
+        }
+        ++i;
+   }
+   return os;
 
+}
 bool Set::isHere(const char temp)
 {
     if (operator[](int(temp)))
@@ -510,7 +544,7 @@ Set& Set::operator = (const Set& temp)
     return *this;
 }
 
-Set::Set(const char* s): bVector (SIZE_SET)
+Set::Set(const char* s): bVector (UCHAR_SIZE)
 {
     int i = 0;
     while (s[i]) {
@@ -524,7 +558,7 @@ bool Set::isEmpty()
     return (power == 0 ? true : false);
 }
 
-Set::Set(): bVector(SIZE_SET)
+Set::Set(): bVector(UCHAR_SIZE)
 {
     power = 0;
 }
@@ -577,23 +611,6 @@ Set Set::operator / (const Set& temp)
     return ted;
 }
 
-std::istream& operator >> (std::istream & is,  Set& temp)
-{
-    int Range;
-    is >> Range;
-
-    char* characters = new char[Range];
-    std::getchar();
-    std::fgets(characters, Range, stdin);
-
-    for (int i = 0; characters[i]; ++i)
-        temp.Set_1(int(characters[i]));
-    temp.power = temp.WeightOfVector();
-
-    delete [] characters;
-    return is;
-}
-
 Set Set::operator + (const char temp)
 {
     Set ted = *this;
@@ -642,24 +659,12 @@ char Set::maxInSet()
     if (isEmpty()) {
         return ' ';
     }
-    int i = SIZE_SET;
+    int i = UCHAR_SIZE;
     while (operator[](--i) == 0);
     return char(i);
 }
 
-std::ostream& operator << (std::ostream& os, Set& temp)
-{
-    for (int i = 0; i < temp.SIZE_SET ; ++i)
-    {
-        if (temp.operator[](i))
-            os << char(i);
-    }
-    return os;
-
-}
-
 int main()
 {
-
     return 0;
 }
